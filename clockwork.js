@@ -373,7 +373,7 @@ var Clockwork = (function () {
                     case "$z":
                         this.vars["#moveflag"] = true;
                         if (this.spriteholder != undefined) {
-                            animationEngine.setZindex(this.spriteholder, value);
+                            animationEngine.setZ(this.spriteholder, value);
                         }
                         for (var shape in this.collision) {
                             var shapesBody = this.collision[shape];
