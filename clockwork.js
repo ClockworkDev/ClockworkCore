@@ -36,11 +36,19 @@ var Clockwork = (function () {
 
     var collisionCache = [];
 
-    function isEmpty(x) {
-        for (var k in x) {
+    function isEmptyCollision(x) {
+        if (x.hasNoCollisions === true) {
+            return true;
+        } else if (x.hasNoCollisions === false) {
             return false;
+        } else {
+            for (var k in x) {
+                x.hasNoCollisions = false;
+                return false;
+            }
+            x.hasNoCollisions = true;
+            return true;
         }
-        return true;
     }
 
     //The algorithm used to when detecting the collisions
@@ -48,7 +56,7 @@ var Clockwork = (function () {
     var collisionAlgorithm = function (objects, calculate) {
         for (var i = 0; i < objects.length; i++) {
             var firstObject = objects[i];
-            if (firstObject != undefined && !isEmpty(firstObject.collision)) {
+            if (firstObject !== undefined && !isEmptyCollision(firstObject)) {
                 moved[i] = firstObject.vars["#moveflag"];
                 firstObject.vars["#moveflag"] = false;
                 if (collisionCache[i] === undefined) {
@@ -57,7 +65,7 @@ var Clockwork = (function () {
                 var thisCache = collisionCache[i];
                 for (var j = 0; j < objects.length; j++) {
                     var secondObject = objects[j];
-                    if (i != j && objects[j] != undefined && !isEmpty(objects[j].collision) && objects[i] != undefined) {
+                    if (i !== j && objects[j] !== undefined && !isEmptyCollision(objects[j]) && objects[i] !== undefined) {
                         if (!(moved[i] == false && (moved[j] || secondObject.vars["#moveflag"]) == false)) {
                             thisCache[j] = calculate(firstObject, secondObject);
                         } else {
