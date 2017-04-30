@@ -1,4 +1,4 @@
-//ClockworkCore engine
+﻿//ClockworkCore engine
 /**
 *@class
 */
