@@ -420,6 +420,7 @@ var Clockwork = (function () {
                             shapesBody[k].y += this.vars["$y"];
                             shapesBody[k].z += this.vars["$z"];
                             shapesBody[k]["#tag"] = tag;
+                            this.collisionChanged();
                         }
                     }
                 }
@@ -1117,12 +1118,13 @@ var Clockwork = (function () {
                         //Check if they collide
                         if (collisions.detect[shape1] != undefined && collisions.detect[shape1][shape2] != undefined && collisions.detect[shape1][shape2](bodyShape1, bodyShape2, collisionData) == true) {
                             //Send the info to the #collide event handlers
-                            b1.execute_event("#collide", { object: b2.handler, shape1kind: shape1, shape2kind: shape2, shape1id: k, shape2id: l, data: collisionData, shape1tag: bodyShape1["#tag"], shape2tag: bodyShape2["#tag"] });
-
-                            b2.execute_event("#collide", { object: b1.handler, shape1kind: shape2, shape2kind: shape1, shape1id: l, shape2id: k, data: collisionData, shape1tag: bodyShape2["#tag"], shape2tag: bodyShape1["#tag"] });
+                            var a = { object: b2, shape1kind: shape1, shape2kind: shape2, shape1id: k, shape2id: l, data: collisionData, shape1tag: bodyShape1["#tag"], shape2tag: bodyShape2["#tag"] };
+                            b1.execute_event("#collide", a);
+                            var b = { object: b1, shape1kind: shape2, shape2kind: shape1, shape1id: l, shape2id: k, data: collisionData, shape1tag: bodyShape2["#tag"], shape2tag: bodyShape1["#tag"] };
+                            b2.execute_event("#collide", b);
                             if (cache.length == 0) {
                                 cache = [];
-                                cache.push({ a: { object: b2.handler, shape1kind: shape1, shape2kind: shape2, shape1id: k, shape2id: l, data: collisionData, shape1tag: bodyShape1["#tag"], shape2tag: bodyShape2["#tag"] }, b: { object: b1.handler, shape1kind: shape2, shape2kind: shape1, shape1id: l, shape2id: k, data: collisionData, shape1tag: bodyShape1["#tag"], shape2tag: bodyShape2["#tag"] } });
+                                cache.push({ a: a, b: b });
                             }
                         }
                     }
