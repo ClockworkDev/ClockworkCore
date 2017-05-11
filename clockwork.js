@@ -283,11 +283,7 @@ var Clockwork = (function () {
             object[attrname] = temp[attrname];
         }
     }
-    function addJSObjectParameters(object, src) {
-        for (var attrname in src) {
-            object[attrname] = src[attrname];
-        }
-    }
+
 
 
     /**
@@ -876,7 +872,9 @@ var Clockwork = (function () {
             } else {
                 object.setVar("$z", 0);
             }
-            addJSObjectParameters(object.vars, o.vars);
+            for (var attrname in o.vars) {
+                object.setVar(attrname, o.vars[attrname]);
+            }
             object.handler = i;
             return object;
         }).filter(function (x) { return x != null; });
@@ -916,6 +914,11 @@ var Clockwork = (function () {
             if (objects[i].sprite != undefined) {
                 if (objects[i].sprite != undefined) {
                     objects[i].spriteholder = animationEngine.addObject(objects[i].sprite, undefined, objects[i].vars["$x"], objects[i].vars["$y"], objects[i].vars["$z"], objects[i].isstatic, objects[i].doesnottimetravel);
+                    for (var key in objects[i].vars) {
+                        if (key[0] == "$") { //Update renderable properties
+                            objects[i].setVar(key,objects[i].getVar(key));
+                        }
+                    }
                 }
             }
         }
