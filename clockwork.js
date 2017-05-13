@@ -691,6 +691,11 @@ var Clockwork = (function () {
         object.isstatic = !(isStatic);
         if (object.sprite != undefined) {
             object.spriteholder = animationEngine.addObject(object.sprite, object.getVar("$state"), x || 0, y || 0, z || 0, isStatic || false, timeTravels || false);
+            for (var key in object.vars) {
+                if (key[0] == "$") { //Update renderable properties
+                    object.setVar(key, object.getVar(key));
+                }
+            }
         }
         for (var name in vars) {
             object.setVar(name, vars[name]);
