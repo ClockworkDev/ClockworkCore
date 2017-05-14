@@ -105,7 +105,7 @@ var Clockwork = (function () {
         fps = newfps;
         started = true;
         this.setEngineVar("#DOM", DOMelement);
-        clockwork.loadLevel(0);
+        clockwork.loadLevel(currentLevel);
     };
 
     this.fps = function () {
@@ -614,7 +614,7 @@ var Clockwork = (function () {
                 set: function (target, name, value) {
                     return target.setEngineVar(name, value);
                 },
-                enumerate: function(target) {
+                enumerate: function (target) {
                     return Object.keys(target).filter(function (key) { return key.indexOf("_#") != 0; })[Symbol.iterator]()
                 }
             });
@@ -729,6 +729,9 @@ var Clockwork = (function () {
     */
     this.loadLevel = function (n) {
         currentLevel = n;
+        if (started != true) {
+            return;
+        }
         for (var j = 0; j < objects.length; j++) {
             if (objects[j] != null) {
                 objects[j].execute_event("#exit", []);
@@ -921,7 +924,7 @@ var Clockwork = (function () {
                     objects[i].spriteholder = animationEngine.addObject(objects[i].sprite, undefined, objects[i].vars["$x"], objects[i].vars["$y"], objects[i].vars["$z"], objects[i].isstatic, objects[i].doesnottimetravel);
                     for (var key in objects[i].vars) {
                         if (key[0] == "$") { //Update renderable properties
-                            objects[i].setVar(key,objects[i].getVar(key));
+                            objects[i].setVar(key, objects[i].getVar(key));
                         }
                     }
                 }
