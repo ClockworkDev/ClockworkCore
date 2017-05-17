@@ -1129,6 +1129,7 @@ var Clockwork = (function () {
                             var a = { object: b2, shape1kind: shape1, shape2kind: shape2, shape1id: k, shape2id: l, data: collisionData, shape1tag: bodyShape1["#tag"], shape2tag: bodyShape2["#tag"] };
                             b1.execute_event("#collide", a);
                             var b = { object: b1, shape1kind: shape2, shape2kind: shape1, shape1id: l, shape2id: k, data: collisionData, shape1tag: bodyShape2["#tag"], shape2tag: bodyShape1["#tag"] };
+                            collisionData = {};
                             b2.execute_event("#collide", b);
                             if (cache.length == 0) {
                                 cache = [];
