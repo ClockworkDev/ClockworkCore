@@ -166,7 +166,52 @@ var Clockwork = (function () {
  * @param {Object} value - The value of the variable
  */
     this.setEngineVar = function (variable, value) {
+        var cameraMovedFlag = false;
+        if (variable == "$cameraX") {
+            objects.filter(function (x) {
+                return x !== null && x.isstatic;
+            }).forEach(function (object) {
+                for (var shape in object.collision) {
+                    var shapesBody = object.collision[shape];
+                    for (var k = 0; k < shapesBody.length; k++) {
+                        shapesBody[k].x += value - (globalvars[variable] || 0);
+                    }
+                }
+            });
+            cameraMovedFlag = true;
+        }
+        if (variable == "$cameraY") {
+            objects.filter(function (x) {
+                return x !== null && x.isstatic;
+            }).forEach(function (object) {
+                for (var shape in object.collision) {
+                    var shapesBody = object.collision[shape];
+                    for (var k = 0; k < shapesBody.length; k++) {
+                        shapesBody[k].y += value - (globalvars[variable] || 0);
+                    }
+                }
+            });
+            cameraMovedFlag = true;
+
+        }
+        if (variable == "$cameraZ") {
+            objects.filter(function (x) {
+                return x !== null && x.isstatic;
+            }).forEach(function (object) {
+                for (var shape in object.collision) {
+                    var shapesBody = object.collision[shape];
+                    for (var k = 0; k < shapesBody.length; k++) {
+                        shapesBody[k].z += value - (globalvars[variable] || 0);
+                    }
+                }
+            });
+            cameraMovedFlag = true;
+
+        }
         globalvars[variable] = value;
+        if (cameraMovedFlag === true) {
+            animationEngine.setCamera(globalvars["$cameraX"], globalvars["$cameraY"], globalvars["$cameraZ"]);
+        }
     };
 
 
@@ -348,6 +393,9 @@ var Clockwork = (function () {
             setVar: function (variable, value) {
                 if (deferringActionsBecausePaused) {
                     return pushActionQueue((function () { return this.setVar(variable, value); }).bind(this));
+                }
+                if (this.vars[variable] === value) {
+                    return;
                 }
                 switch (variable) {
                     case "$x":
