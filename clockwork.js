@@ -169,7 +169,7 @@ var Clockwork = (function () {
         var cameraMovedFlag = false;
         if (variable == "$cameraX") {
             objects.filter(function (x) {
-                return x !== null && x.isstatic;
+                return x && x.isstatic;
             }).forEach(function (object) {
                 for (var shape in object.collision) {
                     var shapesBody = object.collision[shape];
@@ -182,7 +182,7 @@ var Clockwork = (function () {
         }
         if (variable == "$cameraY") {
             objects.filter(function (x) {
-                return x !== null && x.isstatic;
+                return x && x.isstatic;
             }).forEach(function (object) {
                 for (var shape in object.collision) {
                     var shapesBody = object.collision[shape];
@@ -196,7 +196,7 @@ var Clockwork = (function () {
         }
         if (variable == "$cameraZ") {
             objects.filter(function (x) {
-                return x !== null && x.isstatic;
+                return x && x.isstatic;
             }).forEach(function (object) {
                 for (var shape in object.collision) {
                     var shapesBody = object.collision[shape];
