@@ -725,7 +725,7 @@ var Clockwork = (function () {
 
 
     this.deleteObjectLive = function (object) {
-        clockwork.debug.log("deleteObjectLive is deprecated, use getFPS instead.");
+        clockwork.debug.log("deleteObjectLive is deprecated, use destroy instead.");
         object.execute_event("#exit", []);
         animationEngine.deleteObject(object.spriteholder);
         for (var i = 0; i < objects.length; i++) {
