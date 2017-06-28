@@ -700,12 +700,12 @@ var Clockwork = (function () {
     this.spawn = function (name, kind, vars, isStatic) {
         var object = implementComponent(name, kind);
         object.setVar("$x", vars.$x || 0);
-        object.setVar("$y", vars.$x || 0);
-        object.setVar("$z", vars.$x || 0);
+        object.setVar("$y", vars.$y || 0);
+        object.setVar("$z", vars.$z || 0);
         object.type = kind;
         object.isstatic = isStatic === true;
         if (object.sprite != undefined) {
-            object.spriteholder = animationEngine.addObject(object.sprite, object.getVar("$state"), x || 0, y || 0, z || 0, isStatic || false, timeTravels || false);
+            object.spriteholder = animationEngine.addObject(object.sprite, object.getVar("$state"), object.var.$x, object.var.$y, object.var.$z, isStatic || false,  false);
             for (var key in object.vars) {
                 if (key[0] == "$") { //Update renderable properties
                     object.setVar(key, object.getVar(key));
