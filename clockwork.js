@@ -1,9 +1,6 @@
-//ClockworkCore engine
-/**
-*@class
-*/
+﻿//ClockworkCore engine
 var Clockwork = (function () {
-    /**This object stores the public functions*/
+    /*This object stores the public functions*/
     var clockwork = this;
     //The list of components loaded
     var components = {};
@@ -36,11 +33,19 @@ var Clockwork = (function () {
 
     var collisionCache = [];
 
-    function isEmpty(x) {
-        for (var k in x) {
+    function isEmptyCollision(x) {
+        if (x.hasNoCollisions === true) {
+            return true;
+        } else if (x.hasNoCollisions === false) {
             return false;
+        } else {
+            for (var k in x) {
+                x.hasNoCollisions = false;
+                return false;
+            }
+            x.hasNoCollisions = true;
+            return true;
         }
-        return true;
     }
 
     //The algorithm used to when detecting the collisions
@@ -48,7 +53,7 @@ var Clockwork = (function () {
     var collisionAlgorithm = function (objects, calculate) {
         for (var i = 0; i < objects.length; i++) {
             var firstObject = objects[i];
-            if (firstObject != undefined && !isEmpty(firstObject.collision)) {
+            if (firstObject !== undefined && !isEmptyCollision(firstObject)) {
                 moved[i] = firstObject.vars["#moveflag"];
                 firstObject.vars["#moveflag"] = false;
                 if (collisionCache[i] === undefined) {
@@ -57,7 +62,7 @@ var Clockwork = (function () {
                 var thisCache = collisionCache[i];
                 for (var j = 0; j < objects.length; j++) {
                     var secondObject = objects[j];
-                    if (i != j && objects[j] != undefined && !isEmpty(objects[j].collision) && objects[i] != undefined) {
+                    if (i !== j && objects[j] !== undefined && !isEmptyCollision(objects[j]) && objects[i] !== undefined) {
                         if (!(moved[i] == false && (moved[j] || secondObject.vars["#moveflag"]) == false)) {
                             thisCache[j] = calculate(firstObject, secondObject);
                         } else {
@@ -88,26 +93,22 @@ var Clockwork = (function () {
     //...................................
 
 
-    /**
-   *Starts the engine and loads the firt level
-   * @param {Number} fps - The frames per second 
-   *@public
-   */
     this.start = function (newfps, DOMelement) {
         fps = newfps;
         started = true;
         this.setEngineVar("#DOM", DOMelement);
-        clockwork.loadLevel(0);
+        clockwork.loadLevelByIndex(currentLevel);
     };
 
     this.fps = function () {
+        clockwork.debug.log("fps is deprecated, use getFPS instead.");
         return fps;
     }
 
-    /**
-*Starts (or restarts) the engine execution with the data loaded
-*
-*/
+    this.getFPS = function () {
+        return fps;
+    }
+
     this.setup = function () {
         objects.map(function (x) { return x }).asyncForEach(function (x, cb) { //Create a copy of the objects list, so that objects spawned during #setup wont be initialized twice
             var lock = loadQueue(cb);//When everything is unlocked, execute the callback and iterate to the next
@@ -135,68 +136,83 @@ var Clockwork = (function () {
         }
     });
 
-    /**
-  *Pauses the execution of the engine
-  *
-  */
     this.pause = function () {
         clearInterval(intervalholder);
     };
 
-    /**
-   *Gets the value of a global variable
-   * @param {String} variable - The name of the variable
-   */
     this.getEngineVar = function (variable) {
         return globalvars[variable];
     };
 
-
-    /**
- *Sets the value of a globar variable
- *@param {String} variable - The name of the variable
- * @param {Object} value - The value of the variable
- */
     this.setEngineVar = function (variable, value) {
+        var cameraMovedFlag = false;
+        if (variable == "$cameraX") {
+            objects.filter(function (x) {
+                return x && x.isstatic;
+            }).forEach(function (object) {
+                for (var shape in object.collision) {
+                    var shapesBody = object.collision[shape];
+                    for (var k = 0; k < shapesBody.length; k++) {
+                        shapesBody[k].x += value - (globalvars[variable] || 0);
+                    }
+                }
+            });
+            cameraMovedFlag = true;
+        }
+        if (variable == "$cameraY") {
+            objects.filter(function (x) {
+                return x && x.isstatic;
+            }).forEach(function (object) {
+                for (var shape in object.collision) {
+                    var shapesBody = object.collision[shape];
+                    for (var k = 0; k < shapesBody.length; k++) {
+                        shapesBody[k].y += value - (globalvars[variable] || 0);
+                    }
+                }
+            });
+            cameraMovedFlag = true;
+
+        }
+        if (variable == "$cameraZ") {
+            objects.filter(function (x) {
+                return x && x.isstatic;
+            }).forEach(function (object) {
+                for (var shape in object.collision) {
+                    var shapesBody = object.collision[shape];
+                    for (var k = 0; k < shapesBody.length; k++) {
+                        shapesBody[k].z += value - (globalvars[variable] || 0);
+                    }
+                }
+            });
+            cameraMovedFlag = true;
+
+        }
         globalvars[variable] = value;
+        if (cameraMovedFlag === true) {
+            animationEngine.setCamera(globalvars["$cameraX"], globalvars["$cameraY"], globalvars["$cameraZ"]);
+        }
     };
 
-
-    /**
-    *Gets an object using its handler
-    *@param {Object} i - The handler
-    * @returns The object
-    */
     this.getObject = function (variable) {
         return objects[variable];
     };
 
-    /**
-*Gets an object
-*@param {Object} variable - The object name
-*/
     this.find = function (variable) {
         return searchWhereDeep(objects, ["vars", "#name"], variable);
     };
 
-    /**
-*Sets the animation engine
-*@param {Object} engine - The animation engine
-*/
     this.setAnimationEngine = function (engine) {
         animationEngine = engine;
     };
 
-
-    /**
-  *Gets the animation engine
-  *@return {Object} engine - The animation engine
-  */
     this.getAnimationEngine = function () {
+        clockwork.debug.log("getAnimationEngine is deprecated, use getRenderingLibrary instead.");
         return animationEngine;
     };
 
-
+    this.getRenderingLibrary = function () {
+        return animationEngine;
+    };
 
     //....................
     //     JS Tools
@@ -275,18 +291,7 @@ var Clockwork = (function () {
             object[attrname] = temp[attrname];
         }
     }
-    function addJSObjectParameters(object, src) {
-        for (var attrname in src) {
-            object[attrname] = src[attrname];
-        }
-    }
 
-
-    /**
-   * 
-   *@return A XMLHttpRequest object
-   *@Private
-   */
     function getXMLHttpRequest() {
         if (window.XMLHttpRequest && !(window.ActiveXObject && isFileProtocol)) {
             return new (XMLHttpRequest);
@@ -299,16 +304,6 @@ var Clockwork = (function () {
         }
     }
 
-
-    /**
-     * 
-     *Loads an xml file, runs the parser function and then executes the callback
-     * @param {String} url - The url of the xml file
-     * @param {Function} parser - The function that will read data from the xml
-     * @param {Function} callback - A function that will be executed after the parser has finished
-     * @Private
-     *
-     */
     function loadXMLFile(url, parser, callback) {
 
         var xmlhttp = getXMLHttpRequest();
@@ -344,6 +339,9 @@ var Clockwork = (function () {
             setVar: function (variable, value) {
                 if (deferringActionsBecausePaused) {
                     return pushActionQueue((function () { return this.setVar(variable, value); }).bind(this));
+                }
+                if (this.vars[variable] === value) {
+                    return;
                 }
                 switch (variable) {
                     case "$x":
@@ -412,12 +410,16 @@ var Clockwork = (function () {
                             shapesBody[k].y += this.vars["$y"];
                             shapesBody[k].z += this.vars["$z"];
                             shapesBody[k]["#tag"] = tag;
+                            this.collisionChanged();
                         }
                     }
                 }
             },
             execute_event: function (name, args) {
                 if (debugMode == true) {
+                    if (name === "#setup") {
+                        this.hasBeenSetUp = true;
+                    }
                     if (deferringActionsBecausePaused) {
                         return pushActionQueue((function () { return this.execute_event(name, args); }).bind(this));
                     }
@@ -434,10 +436,14 @@ var Clockwork = (function () {
                         }
                     }
                     if (this.eventfunction[name] != undefined) {
+                        if (name[0] !== "#" && this.hasBeenSetUp !== true) {
+                            clockwork.debug.log("Warning: Event " + name + " of " + this.vars["#name"] + " has been called before #setup has been executed");
+                        }
                         try {
                             this.eventfunction[name].call(this, args);
                         } catch (e) {
-                            breakpointHandler("error", { msg: "The folllowing exception happened at event handler '" + name + "' of '" + this.vars["#name"] + "': " + e.message });
+                            var lineNumber = /eval code:([0-9]*)/.exec(e.stack)[1];
+                            breakpointHandler("error", { msg: "The folllowing exception happened at line " + lineNumber + " event handler '" + name + "' of '" + this.vars["#name"] + "': " + e.message });
                         }
                     }
                     eventStack.pop();
@@ -609,7 +615,7 @@ var Clockwork = (function () {
                 set: function (target, name, value) {
                     return target.setEngineVar(name, value);
                 },
-                enumerate: function(target) {
+                enumerate: function (target) {
                     return Object.keys(target).filter(function (key) { return key.indexOf("_#") != 0; })[Symbol.iterator]()
                 }
             });
@@ -617,11 +623,6 @@ var Clockwork = (function () {
     }
     addSyntacticSugar(clockwork);
 
-
-    /**
-     *Loads the components from a JavaScript object
-     * @param {Object} components - The object holding the components
-     */
     this.loadComponents = function (newcomponents) {
         for (var i = 0; i < newcomponents.length; i++) {
             var thiscomponent = newcomponents[i];
@@ -671,13 +672,8 @@ var Clockwork = (function () {
     //      Levels
     //...................
 
-    /**
-    * Loads an object when the level is already loaded
-    * @param {String} kind - The component used
-    * @param {String} name - The name of the new object
-    * @returns The object
-    */
     this.addObjectLive = function (name, kind, x, y, z, isStatic, timeTravels, vars) {
+        clockwork.debug.log("addObjectLive is deprecated, use spawn instead.");
         var object = implementComponent(name, kind);
         object.setVar("$x", x || 0);
         object.setVar("$y", y || 0);
@@ -686,6 +682,35 @@ var Clockwork = (function () {
         object.isstatic = !(isStatic);
         if (object.sprite != undefined) {
             object.spriteholder = animationEngine.addObject(object.sprite, object.getVar("$state"), x || 0, y || 0, z || 0, isStatic || false, timeTravels || false);
+            for (var key in object.vars) {
+                if (key[0] == "$") { //Update renderable properties
+                    object.setVar(key, object.getVar(key));
+                }
+            }
+        }
+        for (var name in vars) {
+            object.setVar(name, vars[name]);
+        }
+        object.execute_event("#setup");
+        object.handler = objects.length;
+        objects.push(object);
+        return object;
+    }
+
+    this.spawn = function (name, kind, vars, isStatic) {
+        var object = implementComponent(name, kind);
+        object.setVar("$x", vars.$x || 0);
+        object.setVar("$y", vars.$y || 0);
+        object.setVar("$z", vars.$z || 0);
+        object.type = kind;
+        object.isstatic = isStatic === true;
+        if (object.sprite != undefined) {
+            object.spriteholder = animationEngine.addObject(object.sprite, object.getVar("$state"), object.var.$x, object.var.$y, object.var.$z, isStatic || false,  false);
+            for (var key in object.vars) {
+                if (key[0] == "$") { //Update renderable properties
+                    object.setVar(key, object.getVar(key));
+                }
+            }
         }
         for (var name in vars) {
             object.setVar(name, vars[name]);
@@ -700,6 +725,17 @@ var Clockwork = (function () {
 
 
     this.deleteObjectLive = function (object) {
+        clockwork.debug.log("deleteObjectLive is deprecated, use destroy instead.");
+        object.execute_event("#exit", []);
+        animationEngine.deleteObject(object.spriteholder);
+        for (var i = 0; i < objects.length; i++) {
+            if (objects[i] == object) {
+                objects[i] = undefined;
+            }
+        }
+    }
+
+    this.destroy = function (object) {
         object.execute_event("#exit", []);
         animationEngine.deleteObject(object.spriteholder);
         for (var i = 0; i < objects.length; i++) {
@@ -713,12 +749,11 @@ var Clockwork = (function () {
         return objects.filter(function (x) { return x; });
     }
 
-    /**
-    * Loads a level
-    * @param {Number} n - The level number
-    */
-    this.loadLevel = function (n) {
+    this.loadLevelByIndex = function (n) {
         currentLevel = n;
+        if (started != true) {
+            return;
+        }
         for (var j = 0; j < objects.length; j++) {
             if (objects[j] != null) {
                 objects[j].execute_event("#exit", []);
@@ -740,29 +775,28 @@ var Clockwork = (function () {
         }, 5);
     };
 
-    /**
-    * Loads a level
-    * @param {String} id - The level id
-    */
     this.loadLevelByID = function (id) {
+        clockwork.debug.log("loadLevelByID is deprecated, use loadLevel instead.");
         for (var i = 0; i < parsedLevels.length; i++) {
             if (id == parsedLevels[i].id) {
-                clockwork.loadLevel(i);
+                clockwork.loadLevelByIndex(i);
+                return;
+            }
+        }
+    };
+
+    this.loadLevel = function (id) {
+        for (var i = 0; i < parsedLevels.length; i++) {
+            if (id == parsedLevels[i].id) {
+                clockwork.loadLevelByIndex(i);
                 return;
             }
         }
     };
 
     this.reloadLevel = function (id) {
-        clockwork.loadLevel(currentLevel);
+        clockwork.loadLevelByIndex(currentLevel);
     };
-
-
-    /**
-    * Loads the levels data from a XML file
-    * @param {String} url - The url of the .xml
-    * @param {Function} callback - A callback function
-    */
 
     this.loadLevelsFromXML = function (url, callback) {
         loadXMLFile(url, function (xmlDoc) {
@@ -772,13 +806,6 @@ var Clockwork = (function () {
         }, callback);
     };
 
-    /**
-   * Loads the levels data from a XML string
-   * @param {String} data - The xml string
-   * @param {Function} callback - A callback function
-   * @param {String array} names- Names to be used for the levels
-   */
-
     this.loadLevelsFromXMLString = function (data, callback, names) {
         var xmlDoc = (new DOMParser()).parseFromString(data, "text/xml");
         names = names || [];
@@ -787,13 +814,6 @@ var Clockwork = (function () {
         }
         callback();
     };
-
-    /**
-    * Loads the levels data from a JSON object
-    * @param {String} data - The xml string
-    * @param {Function} callback - A callback function
-    * @param {String array} names- Names to be used for the levels
-    */
 
     this.loadLevelsFromJSONobject = function (data, callback) {
         parsedLevels = parsedLevels.concat(data);
@@ -867,7 +887,9 @@ var Clockwork = (function () {
             } else {
                 object.setVar("$z", 0);
             }
-            addJSObjectParameters(object.vars, o.vars);
+            for (var attrname in o.vars) {
+                object.setVar(attrname, o.vars[attrname]);
+            }
             object.handler = i;
             return object;
         }).filter(function (x) { return x != null; });
@@ -907,6 +929,11 @@ var Clockwork = (function () {
             if (objects[i].sprite != undefined) {
                 if (objects[i].sprite != undefined) {
                     objects[i].spriteholder = animationEngine.addObject(objects[i].sprite, undefined, objects[i].vars["$x"], objects[i].vars["$y"], objects[i].vars["$z"], objects[i].isstatic, objects[i].doesnottimetravel);
+                    for (var key in objects[i].vars) {
+                        if (key[0] == "$") { //Update renderable properties
+                            objects[i].setVar(key, objects[i].getVar(key));
+                        }
+                    }
                 }
             }
         }
@@ -945,12 +972,6 @@ var Clockwork = (function () {
         }
 
     }
-
-    /**
-    *Executes and events in all the objects that support it
-    *@param {String} name - The name of the event
-    * @param {Object} e_args - The arguments that the handler will receive
-    */
 
     this.execute_event = function (name, e_args) {
         var r, result = [];
@@ -1000,11 +1021,6 @@ var Clockwork = (function () {
         collisions.detect[shape1][shape2] = detector;
     }
 
-    /**
-    *Registers more shapes and collisions detectors in the engine
-    *@param {Object} collisionPackage - The object containing the shapes and collisions, see the structure in the examples at src/components
-    */
-
     this.registerCollision = function (collisionPackage) {
         registerShape(collisionPackage.shape1);
         registerShape(collisionPackage.shape2);
@@ -1019,19 +1035,13 @@ var Clockwork = (function () {
         return collisionAlgorithm = algorithm;
     };
 
-
-
-    /**
-    *Checks if a given collider collides with any objects in the level
-    *@param {String} type - The collider type
-    *@param {Object} collider - The collider
-    */
-    this.collisionQuery = function (type, collider) {
+    this.collisionQuery = function (type, collider, queryObjects) {
         var collisionData = {};
         var result = [];
         var shape2 = type;
-        for (var i = 0; i < objects.length; i++) {
-            b1 = objects[i];
+        var queriedObjects = queryObjects || objects;
+        for (var i = 0; i < queriedObjects.length; i++) {
+            b1 = queriedObjects[i];
             if (b1 != undefined) {
                 //For each kind of shape
                 for (var shape1 in b1.collision) {
@@ -1041,36 +1051,7 @@ var Clockwork = (function () {
                         bodyShape1 = shapesBody1[k];
                         //Check if they collide
                         if (collisions.detect[shape1] != undefined && collisions.detect[shape1][shape2] != undefined && collisions.detect[shape1][shape2](bodyShape1, collider, collisionData) == true) {
-                            result.push(i);
-                        }
-                    }
-                }
-            }
-        }
-        return result;
-    };
-    /**
-    *Checks if a given collider collides with the provided objects
-    *@param {String} type - The collider type
-    *@param {Object} collider - The collider
-    *@param {Array} queryObjects - The objects
-    */
-    this.collisionQueryObjects = function (type, collider, queryObjects) {
-        var collisionData = {};
-        var result = [];
-        var shape2 = type;
-        for (var i = 0; i < queryObjects.length; i++) {
-            b1 = objects[queryObjects[i]];
-            if (b1 != undefined) {
-                //For each kind of shape
-                for (var shape1 in b1.collision) {
-                    shapesBody1 = b1.collision[shape1];
-                    //For each shape of that kind
-                    for (var k = 0; k < shapesBody1.length; k++) {
-                        bodyShape1 = shapesBody1[k];
-                        //Check if they collide
-                        if (collisions.detect[shape1] != undefined && collisions.detect[shape1][shape2] != undefined && collisions.detect[shape1][shape2](bodyShape1, collider, collisionData) == true) {
-                            result.push(i);
+                            result.push(b1);
                         }
                     }
                 }
@@ -1109,12 +1090,14 @@ var Clockwork = (function () {
                         //Check if they collide
                         if (collisions.detect[shape1] != undefined && collisions.detect[shape1][shape2] != undefined && collisions.detect[shape1][shape2](bodyShape1, bodyShape2, collisionData) == true) {
                             //Send the info to the #collide event handlers
-                            b1.execute_event("#collide", { object: b2.handler, shape1kind: shape1, shape2kind: shape2, shape1id: k, shape2id: l, data: collisionData, shape1tag: bodyShape1["#tag"], shape2tag: bodyShape2["#tag"] });
-
-                            b2.execute_event("#collide", { object: b1.handler, shape1kind: shape2, shape2kind: shape1, shape1id: l, shape2id: k, data: collisionData, shape1tag: bodyShape2["#tag"], shape2tag: bodyShape1["#tag"] });
+                            var a = { object: b2, shape1kind: shape1, shape2kind: shape2, shape1id: k, shape2id: l, data: collisionData, shape1tag: bodyShape1["#tag"], shape2tag: bodyShape2["#tag"] };
+                            b1.execute_event("#collide", a);
+                            var b = { object: b1, shape1kind: shape2, shape2kind: shape1, shape1id: l, shape2id: k, data: collisionData, shape1tag: bodyShape2["#tag"], shape2tag: bodyShape1["#tag"] };
+                            collisionData = {};
+                            b2.execute_event("#collide", b);
                             if (cache.length == 0) {
                                 cache = [];
-                                cache.push({ a: { object: b2.handler, shape1kind: shape1, shape2kind: shape2, shape1id: k, shape2id: l, data: collisionData, shape1tag: bodyShape1["#tag"], shape2tag: bodyShape2["#tag"] }, b: { object: b1.handler, shape1kind: shape2, shape2kind: shape1, shape1id: l, shape2id: k, data: collisionData, shape1tag: bodyShape1["#tag"], shape2tag: bodyShape2["#tag"] } });
+                                cache.push({ a: a, b: b });
                             }
                         }
                     }
