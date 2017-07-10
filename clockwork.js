@@ -724,7 +724,7 @@ var Clockwork = (function () {
                 objects[j].execute_event("#exit", []);
             }
         }
-        clockwork.setEngineVar("#currentlevel", n);
+        clockwork.setEngineVar("#currentlevel", parsedLevels[n].id);
         clockwork.pause();
         if (clockwork.loader) {
             clockwork.loader.show();
