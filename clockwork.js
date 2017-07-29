@@ -340,9 +340,19 @@ var Clockwork = (function () {
                 if (deferringActionsBecausePaused) {
                     return pushActionQueue((function () { return this.setVar(variable, value); }).bind(this));
                 }
-                if (this.vars[variable] === value) {
-                    return;
+                switch (variable) {
+                    case "$x":
+                    case "$y":
+                    case "$z":
+                    case "$state":
+                        if (this.vars[variable] === value) { //Optimize away only if there is a cost to changing the value and there are no sidefects (variable is not used for rendering)
+                            return;
+                        }
+                        break;
+                    default:
+                        break;
                 }
+               
                 switch (variable) {
                     case "$x":
                         this.vars["#moveflag"] = true;
@@ -705,7 +715,7 @@ var Clockwork = (function () {
         object.type = kind;
         object.isstatic = isStatic === true;
         if (object.sprite != undefined) {
-            object.spriteholder = animationEngine.addObject(object.sprite, object.getVar("$state"), object.var.$x, object.var.$y, object.var.$z, isStatic || false,  false);
+            object.spriteholder = animationEngine.addObject(object.sprite, object.getVar("$state"), object.var.$x, object.var.$y, object.var.$z, isStatic || false, false);
             for (var key in object.vars) {
                 if (key[0] == "$") { //Update renderable properties
                     object.setVar(key, object.getVar(key));
@@ -768,8 +778,8 @@ var Clockwork = (function () {
         setTimeout(function () {
             deleteSprites();
             animationEngine.clear();//Just in case
-            objects = loadLevelObjects(parsedLevels[n]);
-            assignSprites();
+            objects = [];
+            loadLevelObjects(parsedLevels[n]);
             exitFlag = false;
             clockwork.setup();
         }, 5);
@@ -863,36 +873,18 @@ var Clockwork = (function () {
     }
 
     function loadLevelObjects(thislevel) {
-        return thislevel.objects.map(function (o, i) {
-            var object;
-            if (o.type instanceof Array) {
-                object = implementMultipleComponents(o.name, o.type);
-            } else {
-                object = implementComponent(o.name, o.type);
-            }
-            if (object == null) {
-                return null;
-            }
-            object.type = o.type;
-            if (o.sprite != null) {
-                object.sprite = o.sprite;
-            }
-            if (o.isstatic != null && o.isstatic != "false") {
-                object.isstatic = true;
-            }
-            object.setVar("$x", o.x);
-            object.setVar("$y", o.y);
-            if (o.z != undefined) {
-                object.setVar("$z", o.z);
-            } else {
-                object.setVar("$z", 0);
-            }
+        thislevel.objects.forEach(function (o, i) {
+            var properties = { $x: o.x, $y: o.y, $z: o.z || 0 };
             for (var attrname in o.vars) {
-                object.setVar(attrname, o.vars[attrname]);
+                properties[attrname] = o.vars[attrname];
             }
-            object.handler = i;
-            return object;
-        }).filter(function (x) { return x != null; });
+            if (o.type instanceof Array) {
+                //object = implementMultipleComponents(o.name, o.type);
+                clockwork.debug.log("Objects that inherit from multiple components dynamically are being reimplemented and are not yet available.");
+            } else {
+                var object = clockwork.spawn(o.name, o.type, properties, o.isstatic != null && o.isstatic != "false");
+            }
+        });
     }
 
     var loadQueue = function (callback) {
@@ -923,21 +915,6 @@ var Clockwork = (function () {
     //     Sprites
     //...................
 
-    function assignSprites() {
-        animationEngine.setCamera(0, 0);
-        for (var i = 0; i < objects.length; i++) {
-            if (objects[i].sprite != undefined) {
-                if (objects[i].sprite != undefined) {
-                    objects[i].spriteholder = animationEngine.addObject(objects[i].sprite, undefined, objects[i].vars["$x"], objects[i].vars["$y"], objects[i].vars["$z"], objects[i].isstatic, objects[i].doesnottimetravel);
-                    for (var key in objects[i].vars) {
-                        if (key[0] == "$") { //Update renderable properties
-                            objects[i].setVar(key, objects[i].getVar(key));
-                        }
-                    }
-                }
-            }
-        }
-    }
 
     function deleteSprites() {
         for (var i = 0; i < objects.length; i++) {
