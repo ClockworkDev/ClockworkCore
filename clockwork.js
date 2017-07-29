@@ -731,6 +731,29 @@ var Clockwork = (function () {
         return object;
     }
 
+    this.spawnWithoutSetup = function (name, kind, vars, isStatic) {
+        var object = implementComponent(name, kind);
+        object.setVar("$x", vars.$x || 0);
+        object.setVar("$y", vars.$y || 0);
+        object.setVar("$z", vars.$z || 0);
+        object.type = kind;
+        object.isstatic = isStatic === true;
+        if (object.sprite != undefined) {
+            object.spriteholder = animationEngine.addObject(object.sprite, object.getVar("$state"), object.var.$x, object.var.$y, object.var.$z, isStatic || false, false);
+            for (var key in object.vars) {
+                if (key[0] == "$") { //Update renderable properties
+                    object.setVar(key, object.getVar(key));
+                }
+            }
+        }
+        for (var name in vars) {
+            object.setVar(name, vars[name]);
+        }
+        object.handler = objects.length;
+        objects.push(object);
+        return object;
+    }
+
 
 
 
@@ -882,7 +905,7 @@ var Clockwork = (function () {
                 //object = implementMultipleComponents(o.name, o.type);
                 clockwork.debug.log("Objects that inherit from multiple components dynamically are being reimplemented and are not yet available.");
             } else {
-                var object = clockwork.spawn(o.name, o.type, properties, o.isstatic != null && o.isstatic != "false");
+                var object = clockwork.spawnWithoutSetup(o.name, o.type, properties, o.isstatic != null && o.isstatic != "false");
             }
         });
     }
