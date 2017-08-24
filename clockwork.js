@@ -352,7 +352,7 @@ var Clockwork = (function () {
                     default:
                         break;
                 }
-               
+
                 switch (variable) {
                     case "$x":
                         this.vars["#moveflag"] = true;
@@ -1049,8 +1049,13 @@ var Clockwork = (function () {
                     //For each shape of that kind
                     for (var k = 0; k < shapesBody1.length; k++) {
                         bodyShape1 = shapesBody1[k];
+                        //Check if the collider between them has been registered, in any order
+                        var collisionDetector1 = collisions.detect[shape1] != undefined && collisions.detect[shape1][shape2] != undefined ? collisions.detect[shape1][shape2] : undefined;
+                        var collisionDetector2 = collisions.detect[shape2] != undefined && collisions.detect[shape2][shape1] != undefined ? collisions.detect[shape2][shape1] : undefined;
                         //Check if they collide
-                        if (collisions.detect[shape1] != undefined && collisions.detect[shape1][shape2] != undefined && collisions.detect[shape1][shape2](bodyShape1, collider, collisionData) == true) {
+                        if (collisionDetector1 && collisionDetector1(bodyShape1, collider, collisionData) == true) {
+                            result.push(b1);
+                        } else if (collisionDetector2 && collisionDetector2(collider, bodyShape1, collisionData) == true) {
                             result.push(b1);
                         }
                     }
